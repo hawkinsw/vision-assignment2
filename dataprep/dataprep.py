@@ -10,7 +10,72 @@ import skimage.draw
 import skimage.transform
 import re
 import numpy
+import random
 
+def unit_test_intersect():
+	s = (5,5,10,10)
+	ss = [(7,7,12,12,)]
+	assert intersect_any(s, ss), "%s and %s should intersect!" % (s,ss)
+	s = (5,5,10,10)
+	ss = [(12,12,14,14,)]
+	assert not intersect_any(s, ss), "%s and %s should intersect!" % (s,ss)
+	s = (5,5,10,10)
+	ss = [(2,7,12,12)]
+	assert intersect_any(s, ss), "%s and %s should intersect!" % (s,ss)
+	s = (5,5,10,10)
+	ss = [(2,2,7,7)]
+	assert intersect_any(s, ss), "%s and %s should intersect!" % (s,ss)
+	s = (2,2,7,7)
+	ss = [(5,5,10,10)]
+	assert intersect_any(s, ss), "%s and %s should intersect!" % (s,ss)
+	s = (2,2,4,4)
+	ss = [(6,6,10,10)]
+	assert not intersect_any(s, ss), "%s and %s should not intersect!" % (s,ss)
+	s = (2,2,10,10)
+	ss = [(4,4,8,8)]
+	assert intersect_any(s, ss), "%s and %s should intersect!" % (s,ss)
+	s = (4,4,8,8)
+	ss = [(2,2,10,10)]
+	assert intersect_any(s, ss), "%s and %s should intersect!" % (s,ss)
+	s = (2,2,7,12)
+	ss = [(5,5,10,10)]
+	assert intersect_any(s, ss), "%s and %s should intersect!" % (s,ss)
+
+#
+#
+# A square is (top, left, bottom, right)
+#
+def intersect(s1, s2):
+	#
+	# Find the top square.
+	# It makes the checks easy and quick.
+	#
+	if s1[0] < s2[0]:
+		t1, l1, b1, r1 = s1
+		t2, l2, b2, r2 = s2
+	else:
+		t1, l1, b1, r1 = s2
+		t2, l2, b2, r2 = s1
+	# Check for side intersections
+	if l2 <= l1 and l1 <= r2 and t1 <= t2 and b1 >= t2:
+		return True
+	if l2 <= r1 and r1 <= r2 and t1 <= t2 and b1 >= t2:
+		return True
+	# Check for bottom intersection
+	if l1 <= l2 and r1 >= l2 and t2 <=b1:
+		return True
+	# Check for encompassing
+	if t1 <= t2 and b1 >= b2 and l1 <= l2 and r1 >= r2:
+		return True
+	return False
+
+def intersect_any(square, squares):
+	for s in squares:
+		print("square: " + str(square))
+		print("s: " + str(s))
+		if (intersect(square, s)):
+			return True
+	return False
 
 class Debug:
 	@classmethod
@@ -63,6 +128,7 @@ class GroundTruth:
 	def __init__(self, url=None, filename=None):
 		self.face_count = 0
 		self.faces = {}
+		self.dimensions = {}
 		if (url != None and filename != None) or\
 		   (url == None and filename == None):
 			raise GroundTruthError(
@@ -107,6 +173,10 @@ class GroundTruth:
 
 			e = e.findNext(['h1','pre'])
 
+		for filename in self.faces.keys():
+			image = skimage.img_as_float(skimage.io.imread(data_dir + "/" + filename))
+			self.dimensions[filename] = image.shape
+
 	def _parse_line(self, line):
 		ls = line.split(" ")
 		filename = ls[0]
@@ -139,6 +209,39 @@ class GroundTruth:
 				image[rr,cc] = 1.0
 			skimage.io.imsave(output_dir + "/" + filename, image)
 
+	def extract_random_patches(self, patch_shape, count=100):
+		patches = []
+		keys = self.faces.keys()
+		for i in range(count):
+			# Find a random image.
+			filename = keys[random.randint(0,len(keys)-1)]
+			faces = self.faces[filename]
+			dimensions = self.dimensions[filename]
+			print("filename: " + str(filename))
+			print("faces: " + str([f.square() for f in faces]))
+			print("dimensions: " + str(dimensions))
+			# Create a random patch
+			while True:
+				top = random.randint(0,dimensions[0]-1)
+				left = random.randint(0,dimensions[1]-1)
+				bottom = top + patch_shape[0]
+				right = left + patch_shape[1]
+				random_patch = (top, left, bottom, right)
+				# Check that patch does not intersect with faces.
+				if not intersect_any(random_patch, [f.square() for f in faces]):
+					print("random patch: " + str(random_patch))
+					image = skimage.img_as_float(skimage.io.imread("./data/" + filename))
+					patches.append((filename, i, image[top:bottom, left:right]))
+					break
+				# Repeat as necessary.
+				pass
+		"""
+		for filename, counter, (top,left,bottom,right) in patches:
+			image = skimage.img_as_float(skimage.io.imread("./data/" + filename))
+			sample = image[top:bottom, left:right]
+			skimage.io.imsave("output/" + counter + "-" + os.path.split(filename)[1], sample)
+		"""
+		return patches
 	def extract_face_patches(self):
 		patches = []
 		for filename in self.faces.keys():
@@ -172,7 +275,7 @@ class GroundTruth:
 			return ""
 		return fh.read()
 
-def generate_face_mosaic(patches, mosaic_filename, height=12, width=12):
+def generate_mosaic(patches, mosaic_filename, height=12, width=12):
 	counter = 0
 	mosaic_width = 12
 	mosaic = numpy.zeros(((height*(1+(len(patches)/mosaic_width))),
@@ -180,7 +283,7 @@ def generate_face_mosaic(patches, mosaic_filename, height=12, width=12):
 	for (filename, _, image) in patches:
 		y_spot = counter/mosaic_width
 		x_spot = counter%mosaic_width
-		print("y_spot: %d x_spot: %d" % (y_spot, x_spot))
+		print("y_spot: %d x_spot: %d filename: %s" % (y_spot, x_spot, filename))
 		scaled = skimage.transform.resize(image, (height,width))
 		mosaic[(y_spot*height):((y_spot*height)+height),\
 		       (x_spot*width):((x_spot*width)+width)] =\
