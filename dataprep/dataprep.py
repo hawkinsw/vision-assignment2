@@ -2,6 +2,8 @@
 
 from __future__ import print_function
 from operator import itemgetter
+import os.path
+
 import urllib2
 from bs4 import BeautifulSoup
 import skimage
@@ -125,7 +127,7 @@ class Face:
 		return self.__square
 
 class GroundTruth:
-	def __init__(self, url=None, filename=None):
+	def __init__(self, data_dir, url=None, filename=None):
 		self.face_count = 0
 		self.faces = {}
 		self.dimensions = {}
@@ -167,9 +169,9 @@ class GroundTruth:
 					Debug.Print("parsed line: " + str(parsed_line))
 					self.face_count += 1
 					if self.faces.has_key(dataset + "/" + parsed_line[0]):
-						self.faces[dataset + "/" + parsed_line[0]].append(parsed_line)
+						self.faces[dataset + "/" + parsed_line[0]].append(parsed_line[1])
 					else:
-						self.faces[dataset + "/" + parsed_line[0]] = [parsed_line]
+						self.faces[dataset + "/" + parsed_line[0]] = [parsed_line[1]]
 
 			e = e.findNext(['h1','pre'])
 
@@ -192,9 +194,7 @@ class GroundTruth:
 	def draw_face_squares(self, output_dir):
 		for filename in self.faces.keys():
 			image = skimage.img_as_float(skimage.io.imread("./data/" + filename))
-			for filename_face in self.faces[filename]:
-				filename = filename_face[0]
-				face = filename_face[1]
+			for face in self.faces[filename]:
 				Debug.Print("filename: " + filename)
 				Debug.Print("face: " + str(face))
 
@@ -207,7 +207,7 @@ class GroundTruth:
 				image[rr,cc] = 1.0
 				rr, cc = skimage.draw.line(bottom, left, top, left)
 				image[rr,cc] = 1.0
-			skimage.io.imsave(output_dir + "/" + filename, image)
+			skimage.io.imsave(output_dir + "/" + os.path.split(filename)[1], image)
 
 	def extract_random_patches(self, patch_shape, count=100):
 		patches = []
@@ -247,9 +247,7 @@ class GroundTruth:
 		for filename in self.faces.keys():
 			image = skimage.img_as_float(skimage.io.imread("./data/" + filename))
 			counter = 0
-			for filename_face in self.faces[filename]:
-				filename = filename_face[0]
-				face = filename_face[1]
+			for face in self.faces[filename]:
 
 				Debug.Print("filename: " + filename)
 				Debug.Print("face: " + str(face))
