@@ -290,7 +290,10 @@ def generate_mosaic(patches, mosaic_filename, height=12, width=12):
 	skimage.io.imsave(mosaic_filename, mosaic)
 
 if __name__ == "__main__":
-	d = GroundTruth(filename="./data.html")
+	#unit_test_intersect()
+	d = GroundTruth("./data/", filename="./data.html")
 	#d.draw_face_squares("./output")
 	patches = d.extract_face_patches()
-	generate_face_mosaic(patches, "./output/mosaic.gif")
+	generate_mosaic(patches, "./output/mosaic.gif")
+	random_patches = d.extract_random_patches((50,50), count=120)
+	generate_mosaic(random_patches, "./output/random-mosaic.gif")
