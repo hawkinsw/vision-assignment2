@@ -90,7 +90,7 @@ class GroundTruthError(Exception):
 		self.message = message
 
 class Face:
-	def __init__(self, expansion=0.15):
+	def __init__(self, expansion=0.25):
 		self.left_eye = ()
 		self.right_eye = ()
 		self.left_mouth = ()
@@ -242,20 +242,24 @@ class GroundTruth:
 			skimage.io.imsave("output/" + counter + "-" + os.path.split(filename)[1], sample)
 		"""
 		return patches
-	def extract_face_patches(self):
+	def extract_face_patches(self, count=100):
 		patches = []
+		total_counter = 0
 		for filename in self.faces.keys():
 			image = skimage.img_as_float(skimage.io.imread("./data/" + filename))
-			counter = 0
+			per_file_count = 0
 			for face in self.faces[filename]:
 
 				Debug.Print("filename: " + filename)
 				Debug.Print("face: " + str(face))
-				Debug.Print("counter: " + str(counter))
+				Debug.Print("counter: " + str(per_file_count))
 
 				top, left, bottom, right = face.square()
-				patches.append((filename, counter, image[top:bottom, left:right]))
-				counter+=1
+				patches.append((filename, per_file_count, image[top:bottom, left:right]))
+				per_file_count+=1
+				total_counter+=1
+				if total_counter == count:
+					return patches
 		return patches
 
 	def _download_ground_truth(self,url):
@@ -276,7 +280,10 @@ class GroundTruth:
 def generate_mosaic(patches, mosaic_filename, height=12, width=12):
 	counter = 0
 	mosaic_width = 12
-	mosaic = numpy.zeros(((height*(1+(len(patches)/mosaic_width))),
+	#
+	# The len(patches) must be exactly a multiple of mosaic_width
+	#
+	mosaic = numpy.zeros(((height*((len(patches)/mosaic_width))),
 		width*mosaic_width))
 	for (filename, _, image) in patches:
 		y_spot = counter/mosaic_width
@@ -293,7 +300,7 @@ if __name__ == "__main__":
 	#unit_test_intersect()
 	d = GroundTruth("./data/", filename="./data.html")
 	#d.draw_face_squares("./output")
-	patches = d.extract_face_patches()
+	patches = d.extract_face_patches(count=120)
 	generate_mosaic(patches, "./output/mosaic.gif")
 	random_patches = d.extract_random_patches((50,50), count=120)
 	generate_mosaic(random_patches, "./output/random-mosaic.gif")
