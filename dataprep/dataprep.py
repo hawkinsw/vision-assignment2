@@ -73,8 +73,8 @@ def intersect(s1, s2):
 
 def intersect_any(square, squares):
 	for s in squares:
-		print("square: " + str(square))
-		print("s: " + str(s))
+		Debug.Print("square: " + str(square))
+		Debug.Print("s: " + str(s))
 		if (intersect(square, s)):
 			return True
 	return False
@@ -218,9 +218,9 @@ class GroundTruth:
 			filename = keys[random.randint(0,len(keys)-1)]
 			faces = self.faces[filename]
 			dimensions = self.dimensions[filename]
-			print("filename: " + str(filename))
-			print("faces: " + str([f.square() for f in faces]))
-			print("dimensions: " + str(dimensions))
+			Debug.Print("filename: " + str(filename))
+			Debug.Print("faces: " + str([f.square() for f in faces]))
+			Debug.Print("dimensions: " + str(dimensions))
 			# Create a random patch
 			while True:
 				top = random.randint(0,dimensions[0]-1)
@@ -230,7 +230,7 @@ class GroundTruth:
 				random_patch = (top, left, bottom, right)
 				# Check that patch does not intersect with faces.
 				if not intersect_any(random_patch, [f.square() for f in faces]):
-					print("random patch: " + str(random_patch))
+					Debug.Print("random patch: " + str(random_patch))
 					image = skimage.img_as_float(skimage.io.imread(self.data_dir + filename))
 					patches.append((filename, i, image[top:bottom, left:right]))
 					break
@@ -299,7 +299,7 @@ def generate_mosaic(patches, mosaic_filename,
 	for (filename, _, image) in patches:
 		y_spot = counter/mosaic_width
 		x_spot = counter%mosaic_width
-		print("y_spot: %d x_spot: %d filename: %s" % (y_spot, x_spot, filename))
+		Debug.Print("y_spot: %d x_spot: %d filename: %s" % (y_spot, x_spot, filename))
 		scaled = skimage.transform.resize(image, (height,width))
 		mosaic[(y_spot*height):((y_spot*height)+height),\
 		       (x_spot*width):((x_spot*width)+width)] =\
