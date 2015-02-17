@@ -278,9 +278,19 @@ class GroundTruth:
 			return ""
 		return fh.read()
 
-def generate_mosaic(patches, mosaic_filename, height=12, width=12):
+def read_mosaic(mosaic_filename, (height,width)=(12,12), mosaic_width=12):
+	patches = []
+	image = skimage.img_as_float(skimage.io.imread(mosaic_filename))
+	mosaic_height, mosaic_width = image.shape
+	for y_spot in range(0,mosaic_height, height):
+		for x_spot in range(0,mosaic_width, width):
+			patches.append(image[y_spot:(y_spot+height), x_spot:(x_spot+width)])
+	return patches
+
+def generate_mosaic(patches, mosaic_filename,
+                    (height, width)=(12,12),
+										mosaic_width=12):
 	counter = 0
-	mosaic_width = 12
 	#
 	# The len(patches) must be exactly a multiple of mosaic_width
 	#
