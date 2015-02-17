@@ -128,6 +128,7 @@ class Face:
 
 class GroundTruth:
 	def __init__(self, data_dir, url=None, filename=None):
+		self.data_dir = data_dir
 		self.face_count = 0
 		self.faces = {}
 		self.dimensions = {}
@@ -193,7 +194,7 @@ class GroundTruth:
 
 	def draw_face_squares(self, output_dir):
 		for filename in self.faces.keys():
-			image = skimage.img_as_float(skimage.io.imread("./data/" + filename))
+			image = skimage.img_as_float(skimage.io.imread(self.data_dir + filename))
 			for face in self.faces[filename]:
 				Debug.Print("filename: " + filename)
 				Debug.Print("face: " + str(face))
@@ -230,7 +231,7 @@ class GroundTruth:
 				# Check that patch does not intersect with faces.
 				if not intersect_any(random_patch, [f.square() for f in faces]):
 					print("random patch: " + str(random_patch))
-					image = skimage.img_as_float(skimage.io.imread("./data/" + filename))
+					image = skimage.img_as_float(skimage.io.imread(self.data_dir + filename))
 					patches.append((filename, i, image[top:bottom, left:right]))
 					break
 				# Repeat as necessary.
@@ -246,7 +247,7 @@ class GroundTruth:
 		patches = []
 		total_counter = 0
 		for filename in self.faces.keys():
-			image = skimage.img_as_float(skimage.io.imread("./data/" + filename))
+			image = skimage.img_as_float(skimage.io.imread(self.data_dir + filename))
 			per_file_count = 0
 			for face in self.faces[filename]:
 
@@ -297,10 +298,4 @@ def generate_mosaic(patches, mosaic_filename, height=12, width=12):
 	skimage.io.imsave(mosaic_filename, mosaic)
 
 if __name__ == "__main__":
-	#unit_test_intersect()
-	d = GroundTruth("./data/", filename="./data.html")
-	#d.draw_face_squares("./output")
-	patches = d.extract_face_patches(count=120)
-	generate_mosaic(patches, "./output/mosaic.gif")
-	random_patches = d.extract_random_patches((50,50), count=120)
-	generate_mosaic(random_patches, "./output/random-mosaic.gif")
+	unit_test_intersect()
