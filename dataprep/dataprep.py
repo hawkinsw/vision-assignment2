@@ -243,7 +243,7 @@ class GroundTruth:
 			skimage.io.imsave("output/" + counter + "-" + os.path.split(filename)[1], sample)
 		"""
 		return patches
-	def extract_face_patches(self, count=100):
+	def extract_face_patches(self, count=120):
 		patches = []
 		total_counter = 0
 		for filename in self.faces.keys():
