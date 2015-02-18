@@ -44,7 +44,8 @@ class Gaussian:
 		self.sigma = numpy.dot(numpy.dot(trunc_u, numpy.diag(trunc_s)), trunc_u_t)
 		# http://en.wikipedia.org/wiki/Singular_value_decomposition#Applications_of_the_SVD
 		self.inv_sigma = numpy.dot(numpy.dot(trunc_u, numpy.diag(inv_trunc_s)), trunc_u_t)
-		self.det_sigma = reduce(lambda x,y: x*y, inv_trunc_s)
+		self.det_sigma = reduce(lambda x,y: x*y, trunc_s)
+		print("det_sigma: " + str(self.det_sigma))
 
 
 	def evaluate(self, x):
