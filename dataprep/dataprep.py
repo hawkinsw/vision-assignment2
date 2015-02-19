@@ -127,8 +127,9 @@ class Face:
 		return self.__square
 
 class GroundTruth:
-	def __init__(self, data_dir, url=None, filename=None):
+	def __init__(self, data_dir, url=None, filename=None, expansion=None):
 		self.data_dir = data_dir
+		self.expansion = expansion
 		self.face_count = 0
 		self.faces = {}
 		self.dimensions = {}
@@ -183,7 +184,10 @@ class GroundTruth:
 	def _parse_line(self, line):
 		ls = line.split(" ")
 		filename = ls[0]
-		face = Face()
+		if self.expansion != None:
+			face = Face(self.expansion)
+		else:
+			face = Face()
 		face.left_eye = (int(float(ls[2])),int(float(ls[1])))
 		face.right_eye = (int(float(ls[4])),int(float(ls[3])))
 		face.nose = (int(float(ls[6])),int(float(ls[5])))
