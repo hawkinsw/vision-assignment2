@@ -53,5 +53,3 @@ class LogReg:
 		return g(numpy.vstack([observation, [1]]), self.estimate)
 	def __repr__(self):
 		return repr(self.estimate)
-	def imsave(self, filename):
-		skimage.io.imsave(filename, numpy.reshape(self.estimate[0:144,:], (12,12)))
