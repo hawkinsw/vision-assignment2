@@ -6,6 +6,12 @@ import matplotlib.pyplot as plt
 import skimage
 import skimage.io
 
+class Debug:
+	@classmethod
+	def Print(cls, str):
+		print(str)
+		pass
+
 def g(observation, estimate):
 	#
 	# Use ravel() here to make these vectors
