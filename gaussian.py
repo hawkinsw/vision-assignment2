@@ -4,6 +4,12 @@ import numpy
 import math
 import matplotlib.pyplot as plt
 
+class Debug:
+	@classmethod
+	def Print(cls, str):
+		#print(str)
+		pass
+
 def mu(shape, arrays):
 	result = numpy.zeros(shape)
 	for a in arrays:
@@ -19,11 +25,9 @@ def sigma(shape, mu, arrays):
 		A[row] = numpy.transpose(a-mu)
 		row += 1
 	result = A.T.dot(A)/(1.0*rows)
-	"""
-	print("A.T.shape: %s" % str(A.T.shape))
-	print("A.shape: %s" % str(A.shape))
-	print("result.shape: %s" % str(result.shape))
-	"""
+	Debug.Print("A.T.shape: %s" % str(A.T.shape))
+	Debug.Print("A.shape: %s" % str(A.shape))
+	Debug.Print("result.shape: %s" % str(result.shape))
 	return result
 
 def FitGaussian(sample_shape, samples):
@@ -32,17 +36,14 @@ def FitGaussian(sample_shape, samples):
 	return Gaussian(_mu, _sigma)
 
 class Gaussian:
-	def __init__(self, mu, sigma, tau=1.0e-0):
+	def __init__(self, mu, sigma, tau=1.0e-5):
 		self.mu = mu
 		(u,s,u_t) = numpy.linalg.svd(sigma)
 
-		"""
-		print("u.shape: %s" % str(u.shape))
-		print("s.shape: %s" % str(numpy.diag(s).shape))
-		print("u_t.shape: %s" % str(u_t.shape))
-		print("s: " + str(s))
-
-		"""
+		Debug.Print("u.shape: %s" % str(u.shape))
+		Debug.Print("s.shape: %s" % str(numpy.diag(s).shape))
+		Debug.Print("u_t.shape: %s" % str(u_t.shape))
+		Debug.Print("s: " + str(s))
 		#
 		# Find out how much of sigma is larger than tau.
 		#
@@ -58,12 +59,10 @@ class Gaussian:
 
 		self.sigma = trunc_u.dot(numpy.diag(trunc_s)).dot(trunc_u_t)
 
-		"""
-		print("trunc_u.shape: %s" % str(trunc_u.shape))
-		print("trunc_s.shape: %s" % str(numpy.diag(trunc_s).shape))
-		print("trunc_u_t.shape: %s" % str(trunc_u_t.shape))
-		print("self.sigma.shape: %s" % str(self.sigma.shape))
-		"""
+		Debug.Print("trunc_u.shape: %s" % str(trunc_u.shape))
+		Debug.Print("trunc_s.shape: %s" % str(numpy.diag(trunc_s).shape))
+		Debug.Print("trunc_u_t.shape: %s" % str(trunc_u_t.shape))
+		Debug.Print("self.sigma.shape: %s" % str(self.sigma.shape))
 		# http://en.wikipedia.org/wiki/Singular_value_decomposition#Applications_of_the_SVD
 		self.inv_sigma = trunc_u.dot(numpy.diag(inv_trunc_s)).dot(trunc_u_t)
 		self.det_sigma = numpy.multiply.reduce(trunc_s)
@@ -71,8 +70,6 @@ class Gaussian:
 	def evaluate(self, x):
 		denominator = (numpy.sqrt(math.pow(2.0*numpy.pi, self.k)*self.det_sigma))
 		exponent=-0.5*numpy.transpose(x-self.mu).dot(self.inv_sigma).dot(x-self.mu)
-		"""
-		print("exponent.shape: %s" % str(exponent.shape))
-		"""
+		Debug.Print("exponent.shape: %s" % str(exponent.shape))
 		exponent = numpy.add.reduce(numpy.add.reduce(exponent))
 		return numpy.exp(exponent)/denominator
