@@ -20,12 +20,12 @@ def g(observation, estimate):
 	exponent = -1.0*(numpy.dot(estimate.ravel(),observation.ravel()))
 	return 1.0/(1.0 + numpy.exp(exponent))
 
-def FitLogReg(observations, classifications, mu):
+def FitLogReg(observations, classifications, mu,
+	convergence=1.0e-2, max_iterations=300):
 	assert len(observations) == len(classifications),\
 		"Number of observations and classifications must match."
 
-	max_iterations = 200
-	convergence = 1.0e-2
+	error_csv = open("./logreg.csv", 'w')
 	_w = numpy.zeros((observations[0].shape[0]+1,1))
 
 	#
@@ -47,9 +47,11 @@ def FitLogReg(observations, classifications, mu):
 		if math.fabs(_w_delta_sum) <= convergence:
 			break
 		iterations += 1
+		error_csv.write("%d,%f\n" % (iterations, _w_delta_sum))
 		if iterations > max_iterations:
 			break
 
+	error_csv.close()
 	return _w
 
 class LogReg:
