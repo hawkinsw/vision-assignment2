@@ -144,6 +144,7 @@ def build_gaussian_evaluator():
 	face_patches = dataprep.read_mosaic("./actual/face-mosaic.gif")
 	reshaped_face = [numpy.reshape(p, image_column_shape) for p in face_patches]
 	face_g = gaussian.FitGaussian(image_column_shape, reshaped_face)
+	face_g.save_mu("./actual/face-average.gif")
 
 	#
 	# Prepare the training data for random patches.
@@ -151,6 +152,7 @@ def build_gaussian_evaluator():
 	random_patches = dataprep.read_mosaic("./actual/random-mosaic.gif")
 	reshaped_random=[numpy.reshape(p, image_column_shape) for p in random_patches]
 	random_g = gaussian.FitGaussian(image_column_shape, reshaped_random)
+	random_g.save_mu("./actual/random-average.gif")
 
 	return Evaluator(GaussianEvaluator(face_g, random_g))
 

@@ -3,6 +3,8 @@
 import numpy
 import math
 import matplotlib.pyplot as plt
+import skimage
+import skimage.io
 
 class Debug:
 	@classmethod
@@ -79,6 +81,10 @@ class Gaussian:
 		# http://en.wikipedia.org/wiki/Singular_value_decomposition#Applications_of_the_SVD
 		self.inv_sigma = trunc_u.dot(numpy.diag(inv_trunc_s)).dot(trunc_u_t)
 		self.det_sigma = numpy.multiply.reduce(trunc_s)
+
+	def save_mu(self, output_file, output_shape=(12,12)):
+		mu_image = self.mu.reshape(output_shape)
+		skimage.io.imsave(output_file, mu_image)
 
 	def evaluate(self, x):
 		denominator = (numpy.sqrt(math.pow(2.0*numpy.pi, self.k)*self.det_sigma))
