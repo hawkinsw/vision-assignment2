@@ -161,9 +161,15 @@ if __name__=='__main__':
 	evaluator_tags = [(linear_evaluator, "linear"),
 		(gaussian_evaluator, "gaussian")]
 	for evaluator, tag in evaluator_tags:
-		find_faces("./solid_faces.jpg",
-			"./found_solid_faces_" + tag + ".jpg",
+		find_faces("./solidbg.jpg",
+			"./found_solidbg_" + tag + ".jpg",
 			evaluator)
-		find_faces("./random_faces.jpg",
-			"./found_random_faces_" + tag + ".jpg",
+		find_faces("./randombg.jpg",
+			"./found_randombg_" + tag + ".jpg",
+			evaluator)
+		find_faces("./solidbg-bioid.jpg",
+			"./found_solidbg-bioid_" + tag + ".jpg",
+			evaluator)
+		find_faces("./randombg-bioid.jpg",
+			"./found_randombg-bioid_" + tag + ".jpg",
 			evaluator)
