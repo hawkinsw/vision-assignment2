@@ -1,0 +1,17 @@
+BioID samples:
+
+From https://www.bioid.com/About/BioID-Face-Database
+1. 1501
+2. 1447
+3. 1379
+
+How did I make the random background? 
+1. Started with a fractal.
+2. Applied a wave transformation
+3. Blurred it.
+4. Added a perlin noise layer.
+
+Why did I use "red" as the background color for the solid bg images?
+Black seemed to make it too sensitive. I think that there was too much change
+between the faces and the black background and there were way too many false 
+positives.
