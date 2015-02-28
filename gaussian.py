@@ -44,6 +44,19 @@ class Gaussian:
 		Debug.Print("s.shape: %s" % str(numpy.diag(s).shape))
 		Debug.Print("u_t.shape: %s" % str(u_t.shape))
 		Debug.Print("s: " + str(s))
+
+		#
+		# Write the singular values to a file
+		# so that we can graph it! Open with
+		# truncation so that we always get
+		# these values.
+		#
+		f = open("./singular.csv", 'w')
+		s_list = numpy.ndarray.tolist(s)
+		s_string = "\n".join([str(ss) for ss in s_list])
+		f.write(s_string)
+		f.close()
+
 		#
 		# Find out how much of sigma is larger than tau.
 		#
