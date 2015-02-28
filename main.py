@@ -76,13 +76,14 @@ def find_faces(input_image_filename,
 			# non-maximum suppression.
 			#
 			is_max = True
-			for xx in range(-1*(neighborhood[1]/2), neighborhood[1]/2):
-				for yy in range(-1*(neighborhood[0]/2), neighborhood[0]/2):
-					if y+yy > 0 and y+yy < found_faces.shape[0] and\
-					   x+xx > 0 and x+xx < found_faces.shape[1] and\
-						 found_faces[y+yy,x+xx] > found_faces[y,x]:
-						is_max = False
-						break
+			if neighborhood != None:
+				for xx in range(-1*(neighborhood[1]/2), neighborhood[1]/2):
+					for yy in range(-1*(neighborhood[0]/2), neighborhood[0]/2):
+						if y+yy > 0 and y+yy < found_faces.shape[0] and\
+						   x+xx > 0 and x+xx < found_faces.shape[1] and\
+							 found_faces[y+yy,x+xx] > found_faces[y,x]:
+							is_max = False
+							break
 			if not is_max:
 				continue
 			rr, cc = skimage.draw.line(y, x, y, x+12)
@@ -161,6 +162,24 @@ if __name__=='__main__':
 	evaluator_tags = [(linear_evaluator, "linear"),
 		(gaussian_evaluator, "gaussian")]
 	for evaluator, tag in evaluator_tags:
+		#
+		# w/o non maximal suppression.
+		#
+		find_faces("./test_input/solidbg.jpg",
+			"./test_output/nnm_found_solidbg_" + tag + ".jpg",
+			evaluator, neighborhood=None)
+		find_faces("./test_input/randombg.jpg",
+			"./test_output/nnm_found_randombg_" + tag + ".jpg",
+			evaluator, neighborhood=None)
+		find_faces("./test_input/solidbg-bioid.jpg",
+			"./test_output/nnm_found_solidbg-bioid_" + tag + ".jpg",
+			evaluator, neighborhood=None)
+		find_faces("./test_input/randombg-bioid.jpg",
+			"./test_output/nnm_found_randombg-bioid_" + tag + ".jpg",
+			evaluator, neighborhood=None)
+		#
+		# w/ non-maximal suppression
+		#
 		find_faces("./test_input/solidbg.jpg",
 			"./test_output/found_solidbg_" + tag + ".jpg",
 			evaluator)
