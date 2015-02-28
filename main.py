@@ -29,13 +29,14 @@ class GaussianEvaluator:
 	def evaluate(self, candidate):
 		face_e = self.face.evaluate(candidate)
 		random_e = self.not_face.evaluate(candidate)
-		return face_e>random_e
+		return (face_e>random_e, face_e-random_e)
 
 class LinearEvaluator:
 	def __init__(self, logreg):
 		self.logreg = logreg
 	def evaluate(self, candidate):
-		return self.logreg.evaluate(candidate) > 0.5
+		value = self.logreg.evaluate(candidate)
+		return (value > 0.5, value)
 
 def __initialize_data__():
 	d = dataprep.GroundTruth("./dataprep/data/",\
@@ -47,29 +48,51 @@ def __initialize_data__():
 	patches = d.extract_random_patches((12,12), count=120)
 	dataprep.generate_mosaic(patches, "./actual/random-mosaic.gif")
 
-def find_faces(input_image_filename, output_image_filename, evaluator):
-	found_faces = []
+def find_faces(input_image_filename,
+	output_image_filename,
+	evaluator,
+	neighborhood = (12,12)):
+
 	test_image = skimage.color.rgb2gray(
 		skimage.img_as_float(skimage.io.imread(input_image_filename)))
 	test_image_height, test_image_width = test_image.shape
+	found_faces = numpy.zeros(test_image.shape)
+
 	for x in range(test_image_width-12):
 		for y in range(test_image_height-12):
 			test_patch = test_image[y:y+12,x:x+12]
 			#print("test patch shape: %s" % str(test_patch.shape))
 			test_patch = numpy.reshape(test_patch, image_column_shape)
-			if evaluator.evaluate(test_patch):
-				found_faces.append((y,x))
+			is_face, value = evaluator.evaluate(test_patch)
+			if is_face:
+				found_faces[y,x] = value
 
-	found_faces = sorted(found_faces, key=itemgetter(0))
-	for y,x in found_faces:
-		rr, cc = skimage.draw.line(y, x, y, x+12)
-		test_image[rr,cc] = 1.0
-		rr, cc = skimage.draw.line(y, x+12, y+12, x+12)
-		test_image[rr,cc] = 1.0
-		rr, cc = skimage.draw.line(y+12, x+12, y+12, x)
-		test_image[rr,cc] = 1.0
-		rr, cc = skimage.draw.line(y+12, x, y, x)
-		test_image[rr,cc] = 1.0
+	#found_faces = sorted(found_faces, key=itemgetter(0))
+	for x in range(found_faces.shape[1]):
+		for y in range(found_faces.shape[0]):
+			if found_faces[y,x] == 0.0:
+				continue
+			#
+			# non-maximum suppression.
+			#
+			is_max = True
+			for xx in range(-1*(neighborhood[1]/2), neighborhood[1]/2):
+				for yy in range(-1*(neighborhood[0]/2), neighborhood[0]/2):
+					if y+yy > 0 and y+yy < found_faces.shape[0] and\
+					   x+xx > 0 and x+xx < found_faces.shape[1] and\
+						 found_faces[y+yy,x+xx] > found_faces[y,x]:
+						is_max = False
+						break
+			if not is_max:
+				continue
+			rr, cc = skimage.draw.line(y, x, y, x+12)
+			test_image[rr,cc] = 1.0
+			rr, cc = skimage.draw.line(y, x+12, y+12, x+12)
+			test_image[rr,cc] = 1.0
+			rr, cc = skimage.draw.line(y+12, x+12, y+12, x)
+			test_image[rr,cc] = 1.0
+			rr, cc = skimage.draw.line(y+12, x, y, x)
+			test_image[rr,cc] = 1.0
 	skimage.io.imsave(output_image_filename, test_image)
 
 def build_linear_classifier_evaluator():
