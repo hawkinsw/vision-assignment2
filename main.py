@@ -3,25 +3,76 @@
 from dataprep import dataprep
 import gaussian
 import logreg
+from operator import itemgetter
 
 import random
 import skimage
 import skimage.io
+import skimage.draw
+import skimage.color
 import numpy
 # We did this once. We can do it again, if we have to.
 # Until then, keep it commented out for reproducibility.
 
+image_column_shape = (144,1)
+
+class Evaluator:
+	def __init__(self, obj):
+		self.obj = obj
+	def evaluate(self, candidate):
+		return self.obj.evaluate(candidate)
+
+class GaussianEvaluator:
+	def __init__(self, face, not_face):
+		self.face = face
+		self.not_face = not_face
+	def evaluate(self, candidate):
+		face_e = self.face.evaluate(candidate)
+		random_e = self.not_face.evaluate(candidate)
+		return face_e>random_e
+
+class LinearEvaluator:
+	def __init__(self, logreg):
+		self.logreg = logreg
+	def evaluate(self, candidate):
+		return self.logreg.evaluate(candidate) > 0.5
+
 def __initialize_data__():
 	d = dataprep.GroundTruth("./dataprep/data/",\
-		filename="./dataprep/data.html",\
-		expansion=0.30)
-	#d.draw_face_squares("./output2/")
+		filename="./dataprep/data-hires.html",\
+		expansion=0.20)
+	d.draw_face_squares("./output/")
 	patches = d.extract_face_patches()
 	dataprep.generate_mosaic(patches, "./actual/face-mosaic.gif")
 	patches = d.extract_random_patches((12,12), count=120)
 	dataprep.generate_mosaic(patches, "./actual/random-mosaic.gif")
 
-def linear_classifier_detector():
+def find_faces(input_image_filename, output_image_filename, evaluator):
+	found_faces = []
+	test_image = skimage.color.rgb2gray(
+		skimage.img_as_float(skimage.io.imread(input_image_filename)))
+	test_image_height, test_image_width = test_image.shape
+	for x in range(test_image_width-12):
+		for y in range(test_image_height-12):
+			test_patch = test_image[y:y+12,x:x+12]
+			#print("test patch shape: %s" % str(test_patch.shape))
+			test_patch = numpy.reshape(test_patch, image_column_shape)
+			if evaluator.evaluate(test_patch):
+				found_faces.append((y,x))
+
+	found_faces = sorted(found_faces, key=itemgetter(0))
+	for y,x in found_faces:
+		rr, cc = skimage.draw.line(y, x, y, x+12)
+		test_image[rr,cc] = 1.0
+		rr, cc = skimage.draw.line(y, x+12, y+12, x+12)
+		test_image[rr,cc] = 1.0
+		rr, cc = skimage.draw.line(y+12, x+12, y+12, x)
+		test_image[rr,cc] = 1.0
+		rr, cc = skimage.draw.line(y+12, x, y, x)
+		test_image[rr,cc] = 1.0
+	skimage.io.imsave(output_image_filename, test_image)
+
+def build_linear_classifier_evaluator():
 	#
 	# First 120 patches are going to be faces.
 	# Second 120 patches are not.
@@ -40,19 +91,11 @@ def linear_classifier_detector():
 	#
 	# Prepare the training data for face patches.
 	#
-	image_column_shape = (144,1)
 	face_patches = dataprep.read_mosaic("./actual/face-mosaic.gif")
 	face_reshaped = [numpy.reshape(p, image_column_shape) for p in face_patches]
 	for r in face_reshaped:
 		observations[observations_counter] = r
 		observations_counter+=1
-
-	#
-	# Find a random face so that we can test!
-	#
-	random_face_index = random.randint(0, len(face_patches)-1)
-	random_face = face_patches[random_face_index]
-	random_face = numpy.reshape(random_face, image_column_shape)
 
 	#
 	# Prepare the training data for random patches.
@@ -63,27 +106,14 @@ def linear_classifier_detector():
 		observations[observations_counter] = r
 		observations_counter+=1
 
-	#
-	# Find a random random so that we can test!
-	#
-	random_random_index = random.randint(0, len(random_patches)-1)
-	random_random = random_patches[random_random_index]
-	random_random = numpy.reshape(random_random, image_column_shape)
-
 	print("# of classifications: " + str(classifications.size))
 	print("# of observations: " + str(len(observations)))
 
 	l = logreg.LogReg(logreg.FitLogReg(observations, classifications, 0.01))
-	#print("w: " + str(l))
 
-	print("random face index: " + str(random_face_index))
-	print("random face evaluation: " + str(l.evaluate(random_face)))
-	print("random random index: " + str(random_random_index))
-	print("random random evaluation: " + str(l.evaluate(random_random)))
+	return Evaluator(LinearEvaluator(l))
 
-def gaussian_detector():
-	image_column_shape = (144,1)
-
+def build_gaussian_evaluator():
 	#
 	# Prepare the training data for face patches.
 	#
@@ -92,44 +122,31 @@ def gaussian_detector():
 	face_g = gaussian.FitGaussian(image_column_shape, reshaped_face)
 
 	#
-	# Find a random face so that we can test!
-	#
-	random_face = face_patches[random.randint(0, len(face_patches)-1)]
-	random_face = numpy.reshape(random_face, image_column_shape)
-
-	#
 	# Prepare the training data for random patches.
 	#
 	random_patches = dataprep.read_mosaic("./actual/random-mosaic.gif")
 	reshaped_random=[numpy.reshape(p, image_column_shape) for p in random_patches]
 	random_g = gaussian.FitGaussian(image_column_shape, reshaped_random)
 
-	#
-	# Find a random random so that we can test!
-	#
-	random_random = random_patches[random.randint(0, len(random_patches)-1)]
-	random_random = numpy.reshape(random_random, image_column_shape)
-
-	face_e = face_g.evaluate(random_face)
-	random_e = random_g.evaluate(random_face)
-	print("Face:")
-	print("face e: " + repr(face_e))
-	print("random e: " + repr(random_e))
-	if (face_e>random_e):
-		print("Face detected.")
-	else:
-		print("Face NOT detected.")
-
-	face_e = face_g.evaluate(random_random)
-	random_e = random_g.evaluate(random_random)
-	print("Random:")
-	print("face e: " + repr(face_e))
-	print("random e: " + repr(random_e))
-	if (face_e>random_e):
-		print("Face detected.")
-	else:
-		print("Face NOT detected.")
+	return Evaluator(GaussianEvaluator(face_g, random_g))
 
 if __name__=='__main__':
-	#linear_classifier_detector()
-	gaussian_detector()
+	__initialize_data__()
+	linear_evaluator = build_linear_classifier_evaluator()
+	gaussian_evaluator = build_gaussian_evaluator()
+
+	evaluator_tags = [(linear_evaluator, "linear"),
+		(gaussian_evaluator, "gaussian")]
+	for evaluator, tag in evaluator_tags:
+		find_faces("./find_faces.jpg",
+			"./found_faces_" + tag + ".jpg",
+			evaluator)
+		find_faces("./find_faces_random.jpg",
+			"./found_faces_random_" + tag + ".jpg",
+			evaluator)
+		find_faces("./find_faces_hires.jpg",
+			"./found_faces_hires_" + tag + ".jpg",
+			evaluator)
+		find_faces("./find_faces_hires_random.jpg",
+			"./found_faces_hires_random_" + tag + ".jpg",
+			evaluator)
