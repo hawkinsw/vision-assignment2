@@ -154,22 +154,16 @@ def build_gaussian_evaluator():
 	return Evaluator(GaussianEvaluator(face_g, random_g))
 
 if __name__=='__main__':
-	__initialize_data__()
+	#__initialize_data__()
 	linear_evaluator = build_linear_classifier_evaluator()
 	gaussian_evaluator = build_gaussian_evaluator()
 
 	evaluator_tags = [(linear_evaluator, "linear"),
 		(gaussian_evaluator, "gaussian")]
 	for evaluator, tag in evaluator_tags:
-		find_faces("./find_faces.jpg",
-			"./found_faces_" + tag + ".jpg",
+		find_faces("./solid_faces.jpg",
+			"./found_solid_faces_" + tag + ".jpg",
 			evaluator)
-		find_faces("./find_faces_random.jpg",
-			"./found_faces_random_" + tag + ".jpg",
-			evaluator)
-		find_faces("./find_faces_hires.jpg",
-			"./found_faces_hires_" + tag + ".jpg",
-			evaluator)
-		find_faces("./find_faces_hires_random.jpg",
-			"./found_faces_hires_random_" + tag + ".jpg",
+		find_faces("./random_faces.jpg",
+			"./found_random_faces_" + tag + ".jpg",
 			evaluator)
