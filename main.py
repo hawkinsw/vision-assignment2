@@ -43,10 +43,10 @@ def __initialize_data__():
 		filename="./dataprep/data-hires.html",\
 		expansion=0.20)
 	d.draw_face_squares("./output/")
-	patches = d.extract_face_patches()
-	dataprep.generate_mosaic(patches, "./actual/face-mosaic.gif")
-	patches = d.extract_random_patches((12,12), count=120)
-	dataprep.generate_mosaic(patches, "./actual/random-mosaic.gif")
+	patches = d.extract_face_patches(count=100)
+	dataprep.generate_mosaic(patches, "./actual/face-mosaic.gif", mosaic_width=10)
+	patches = d.extract_random_patches((12,12), count=100)
+	dataprep.generate_mosaic(patches, "./actual/random-mosaic.gif", mosaic_width=10)
 
 def find_faces(input_image_filename,
 	output_image_filename,
@@ -101,16 +101,16 @@ def build_linear_classifier_evaluator():
 	# First 120 patches are going to be faces.
 	# Second 120 patches are not.
 	#
-	classifications = numpy.zeros((240,1))
-	classifications[0:119] = 1.0
-	classifications[120:239] = 0.0
+	classifications = numpy.zeros((200,1))
+	classifications[0:99] = 1.0
+	classifications[100:199] = 0.0
 
 	#
 	# Preallocate 240 spots for image patches.
 	#
 	observations = []
 	observations_counter = 0
-	[observations.append(0) for i in range(240)]
+	[observations.append(0) for i in range(200)]
 
 	#
 	# Prepare the training data for face patches.
