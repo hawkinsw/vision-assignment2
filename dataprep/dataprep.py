@@ -295,21 +295,30 @@ def generate_mosaic(patches, mosaic_filename,
                     (height, width)=(12,12),
 										mosaic_width=12):
 	counter = 0
+	upscale_factor = 2
+	mosaic_upscale_filename = os.path.splitext(mosaic_filename)[0] + "_upscale" + os.path.splitext(mosaic_filename)[1]
 	#
 	# The len(patches) must be exactly a multiple of mosaic_width
 	#
 	mosaic = numpy.zeros(((height*((len(patches)/mosaic_width))),
 		width*mosaic_width))
+	mosaic_upscale = numpy.zeros(((height*upscale_factor*((len(patches)/mosaic_width))),
+		width*upscale_factor*mosaic_width))
 	for (filename, _, image) in patches:
 		y_spot = counter/mosaic_width
 		x_spot = counter%mosaic_width
 		Debug.Print("y_spot: %d x_spot: %d filename: %s" % (y_spot, x_spot, filename))
 		scaled = skimage.transform.resize(image, (height,width))
+		scaled_upscale = skimage.transform.resize(image, (height*upscale_factor,width*upscale_factor))
 		mosaic[(y_spot*height):((y_spot*height)+height),\
 		       (x_spot*width):((x_spot*width)+width)] =\
 			scaled[0:height,0:width]
+		mosaic_upscale[(y_spot*height*upscale_factor):((y_spot*height*upscale_factor)+height*upscale_factor),\
+		       (x_spot*width*upscale_factor):((x_spot*width*upscale_factor)+width*upscale_factor)] =\
+			scaled_upscale[0:height*upscale_factor,0:width*upscale_factor]
 		counter += 1
 	skimage.io.imsave(mosaic_filename, mosaic)
+	skimage.io.imsave(mosaic_upscale_filename, mosaic_upscale)
 
 if __name__ == "__main__":
 	unit_test_intersect()
