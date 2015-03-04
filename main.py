@@ -5,6 +5,7 @@ import gaussian
 import logreg
 from operator import itemgetter
 
+import math
 import random
 import skimage
 import skimage.io
@@ -163,20 +164,34 @@ def test_pyramid_find_faces():
 	linear_evaluator = build_linear_classifier_evaluator()
 	gaussian_evaluator = build_gaussian_evaluator()
 
-	evaluator_tags = [(linear_evaluator, "linear"),
-		(gaussian_evaluator, "gaussian")]
+	#evaluator_tags = [(linear_evaluator, "linear"),
+		#(gaussian_evaluator, "gaussian")]
+	evaluator_tags = [(linear_evaluator, "linear")]
 	for evaluator, tag in evaluator_tags:
 		#
 		# w/o non maximal suppression.
 		#
 		pyramid_find_faces("./test_input/solidbg-different-sizes.jpg",
-			"./test_output/nnm_found_solidbg-different-sizes_pyramid_ "+tag+"_.jpg",
-			evaluator,neighborhood=None)
+			"./test_output/nnm_found_solidbg-different-sizes_pyramid_ "+tag+".jpg",
+			evaluator, neighborhood=None)
+		pyramid_find_faces("./test_input/solidbg-different-many-sizes.jpg",
+			"./test_output/nnm_found_solidbg-different-many-sizes_pyramid_ "+tag+".jpg",
+			evaluator, neighborhood=None)
+		pyramid_find_faces("./test_input/solidbg-different-many-sizes-bioid.jpg",
+			"./test_output/nnm_found_solidbg-different-many-sizes-bioid_pyramid_ "+tag+".jpg",
+			evaluator, neighborhood=None)
+
 		#
 		# w/ non-maximal suppression
 		#
 		pyramid_find_faces("./test_input/solidbg-different-sizes.jpg",
-			"./test_output/found_solidbg-different-sizes_pyramid_ "+tag+"_.jpg",
+			"./test_output/found_solidbg-different-sizes_pyramid_ "+tag+".jpg",
+			evaluator)
+		pyramid_find_faces("./test_input/solidbg-different-many-sizes.jpg",
+			"./test_output/found_solidbg-different-many-sizes_pyramid_ "+tag+".jpg",
+			evaluator)
+		pyramid_find_faces("./test_input/solidbg-different-many-sizes-bioid.jpg",
+			"./test_output/found_solidbg-different-many-sizes-bioid_pyramid_ "+tag+".jpg",
 			evaluator)
 
 def basic_find_faces(input_image_filename,
@@ -227,13 +242,19 @@ def pyramid_find_faces(input_image_filename,
 	output_image_filename,
 	evaluator,
 	neighborhood = (12,12),
-	sigma=0.1,
-	octaves = 10):
+	scale=1.1,
+	octaves = 25):
 
 	original_test_image = skimage.color.rgb2gray(
 		skimage.img_as_float(skimage.io.imread(input_image_filename)))
 	output_image = numpy.zeros(original_test_image.shape, dtype=object)
 	test_image = original_test_image
+
+	o = 0
+	#for pyr in skimage.transform.pyramid_gaussian(test_image, 10, 1.1):
+		#skimage.io.imsave("./output/pyr-test_image-" + str(o) + ".jpg", pyr)
+		#test_image = pyr
+		#o += 1
 	for o in range(octaves):
 		print("Starting octave %d." % o)
 		print("Test image shape: %s." % str(test_image.shape))
@@ -251,25 +272,24 @@ def pyramid_find_faces(input_image_filename,
 
 		# convert found face locations back to original
 		for (yp,xp), value in found_faces:
-			y = yp*(2**o)
-			x = xp*(2**o)
+			y = yp*((scale)**o)
+			x = xp*((scale)**o)
 			print("Found face at (yp,xp):(%d,%d) -> (y,x):(%d,%d)" %(yp,xp,y,x))
 			if output_image[y,x] == 0 or value > output_image[y,x][0]:
-				output_image[y,x] = (value, (12*(2**o),12*(2**o)))
+				output_image[y,x] = (value, (12*(scale**o),12*(scale**o)))
 		else:
 			if len(found_faces) == 0:
-				print("Found no faces at %d:%f" % (o,sigma))
+				print("Found no faces at %d." % o)
 		#
 		# Prepare for the next level
 		#
-		# 1. update sigma!
-		sigma *= 2
-		# 2. blur
+		# 1. blur
 		test_image = skimage.filter.gaussian_filter(test_image,
-			sigma,
+			2*scale/6.0, # we all know where this came from!
 			mode='wrap')
-		# 3. subsample
-		test_image = test_image[0::2,0::2]
+		# 2. subsample
+		test_image = skimage.transform.rescale(test_image, 1.0/scale)
+			#(test_image.shape[0]*scale, test_image.shape[1]*scale))
 
 	# 
 	# Draw boxes around found faces.
@@ -295,15 +315,19 @@ def pyramid_find_faces(input_image_filename,
 				continue
 			found_face_width = output_image[y,x][1][1]
 			found_face_height = output_image[y,x][1][0]
-			rr, cc = skimage.draw.line(y, x, y, x+found_face_width)
+
+			right =math.floor(min(x+found_face_width, original_test_image.shape[1]-1))
+			bottom=math.floor(min(y+found_face_height,original_test_image.shape[0]-1))
+			right = int(right)
+			bottom = int(bottom)
+
+			rr, cc = skimage.draw.line(y, x, y, right)
 			original_test_image[rr,cc] = 1.0
-			rr, cc = skimage.draw.line(y, x+found_face_width,
-				y+found_face_height, x+found_face_width)
+			rr, cc = skimage.draw.line(y, right, bottom, right)
 			original_test_image[rr,cc] = 1.0
-			rr, cc = skimage.draw.line(y+found_face_height, x+found_face_width,
-				y+found_face_height, x)
+			rr, cc = skimage.draw.line(bottom, right, bottom, x)
 			original_test_image[rr,cc] = 1.0
-			rr, cc = skimage.draw.line(y+found_face_height, x, y, x)
+			rr, cc = skimage.draw.line(bottom, x, y, x)
 			original_test_image[rr,cc] = 1.0
 
 	skimage.io.imsave(output_image_filename, original_test_image)
