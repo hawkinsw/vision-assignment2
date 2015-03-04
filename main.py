@@ -122,6 +122,28 @@ def build_gaussian_evaluator():
 
 	return Evaluator(GaussianEvaluator(face_g, random_g))
 
+def self_eating_test():
+	linear_evaluator = build_linear_classifier_evaluator()
+	gaussian_evaluator = build_gaussian_evaluator()
+	evaluator_tags = [(linear_evaluator, "linear"),
+		(gaussian_evaluator, "gaussian")]
+	mosaic_tags = [("./actual/face-mosaic.gif", "Faces"),
+		("./actual/random-mosaic.gif", "Random")]
+	for evaluator, evaluator_tag in evaluator_tags:
+		for (test_set_filename, test_set_tag) in mosaic_tags:
+			face_count = 0
+			non_face_count = 0
+			test_patches = dataprep.read_mosaic(test_set_filename)
+			test_patches=[numpy.reshape(p, image_column_shape) for p in test_patches]
+			for patch in test_patches:
+				(is_face, value) = evaluator.evaluate(patch)
+				if is_face:
+					face_count += 1
+				else:
+					non_face_count += 1
+			print("%s on %s:" % (evaluator_tag, test_set_tag))
+			print("face_count: %d, non_face_count: %d" % (face_count, non_face_count))
+
 def test_basic_find_faces():
 	linear_evaluator = build_linear_classifier_evaluator()
 	gaussian_evaluator = build_gaussian_evaluator()
@@ -135,8 +157,14 @@ def test_basic_find_faces():
 		basic_find_faces("./test_input/solidbg.jpg",
 			"./test_output/nnm_found_solidbg_" + tag + ".jpg",
 			evaluator, neighborhood=None)
+		basic_find_faces("./test_input/solidbg2.jpg",
+			"./test_output/nnm_found_solidbg2_" + tag + ".jpg",
+			evaluator, neighborhood=None)
 		basic_find_faces("./test_input/randombg.jpg",
 			"./test_output/nnm_found_randombg_" + tag + ".jpg",
+			evaluator, neighborhood=None)
+		basic_find_faces("./test_input/randombg2.jpg",
+			"./test_output/nnm_found_randombg2_" + tag + ".jpg",
 			evaluator, neighborhood=None)
 		basic_find_faces("./test_input/solidbg-bioid.jpg",
 			"./test_output/nnm_found_solidbg-bioid_" + tag + ".jpg",
@@ -150,8 +178,14 @@ def test_basic_find_faces():
 		basic_find_faces("./test_input/solidbg.jpg",
 			"./test_output/found_solidbg_" + tag + ".jpg",
 			evaluator)
+		basic_find_faces("./test_input/solidbg2.jpg",
+			"./test_output/found_solidbg2_" + tag + ".jpg",
+			evaluator)
 		basic_find_faces("./test_input/randombg.jpg",
 			"./test_output/found_randombg_" + tag + ".jpg",
+			evaluator)
+		basic_find_faces("./test_input/randombg2.jpg",
+			"./test_output/found_randombg2_" + tag + ".jpg",
 			evaluator)
 		basic_find_faces("./test_input/solidbg-bioid.jpg",
 			"./test_output/found_solidbg-bioid_" + tag + ".jpg",
@@ -334,5 +368,6 @@ def pyramid_find_faces(input_image_filename,
 
 if __name__=='__main__':
 	#__initialize_data__()
+	#self_eating_test()
 	#test_basic_find_faces()
 	test_pyramid_find_faces()
