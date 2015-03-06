@@ -12,8 +12,6 @@ import skimage.io
 import skimage.draw
 import skimage.color
 import numpy
-# We did this once. We can do it again, if we have to.
-# Until then, keep it commented out for reproducibility.
 
 image_column_shape = (144,1)
 
