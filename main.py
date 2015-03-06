@@ -445,7 +445,8 @@ def pyramid_find_faces(input_image_filename,
 	skimage.io.imsave(output_image_filename, original_test_image)
 
 if __name__=='__main__':
-	#__initialize_data__()
-	#self_eating_test()
-	#test_basic_find_faces()
+	__initialize_data__()
+	self_eating_test()
+	test_basic_find_faces()
+	test_basic_find_faces_mosaic()
 	test_pyramid_find_faces()
