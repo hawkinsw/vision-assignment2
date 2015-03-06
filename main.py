@@ -300,10 +300,9 @@ def basic_find_faces(input_image_filename,
 	for (y,x), value in face_list:
 		found_faces[y,x] = value
 
-	#found_faces = sorted(found_faces, key=itemgetter(0))
 	for x in range(found_faces.shape[1]):
 		for y in range(found_faces.shape[0]):
-			if found_faces[y,x] == 0.0:
+			if found_faces[y,x] == 0:
 				continue
 			#
 			# non-maximum suppression.
@@ -312,11 +311,14 @@ def basic_find_faces(input_image_filename,
 			if neighborhood != None:
 				for xx in range(-1*(neighborhood[1]/2), neighborhood[1]/2):
 					for yy in range(-1*(neighborhood[0]/2), neighborhood[0]/2):
+						if xx ==0 and yy == 0: continue
 						if y+yy > 0 and y+yy < found_faces.shape[0] and\
 						   x+xx > 0 and x+xx < found_faces.shape[1] and\
 							 found_faces[y+yy,x+xx] > found_faces[y,x]:
 							is_max = False
 							break
+					if not is_max:
+						break
 			if not is_max:
 				continue
 			rr, cc = skimage.draw.line(y, x, y, x+12)
