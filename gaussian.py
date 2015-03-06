@@ -32,13 +32,13 @@ def sigma(shape, mu, arrays):
 	Debug.Print("result.shape: %s" % str(result.shape))
 	return result
 
-def FitGaussian(sample_shape, samples):
+def FitGaussian(sample_shape, samples, name="gaussian"):
 	_mu = mu(sample_shape, samples)
 	_sigma = sigma(sample_shape, _mu, samples)
-	return Gaussian(_mu, _sigma)
+	return Gaussian(_mu, _sigma, singular_filename=name+"_singular.csv")
 
 class Gaussian:
-	def __init__(self, mu, sigma, tau=1.0e-5):
+	def __init__(self, mu, sigma, tau=1.0e-8, singular_filename="singular.csv"):
 		self.mu = mu
 		(u,s,u_t) = numpy.linalg.svd(sigma)
 
@@ -53,7 +53,7 @@ class Gaussian:
 		# truncation so that we always get
 		# these values.
 		#
-		f = open("./singular.csv", 'w')
+		f = open(singular_filename, 'w')
 		s_list = numpy.ndarray.tolist(s)
 		s_string = "\n".join([str(ss) for ss in s_list])
 		f.write(s_string)

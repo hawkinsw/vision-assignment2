@@ -21,11 +21,11 @@ def g(observation, estimate):
 	return 1.0/(1.0 + numpy.exp(exponent))
 
 def FitLogReg(observations, classifications, mu,
-	convergence=1.0e-2, max_iterations=300):
+	convergence=1.0e-2, max_iterations=300, name="logreg"):
 	assert len(observations) == len(classifications),\
 		"Number of observations and classifications must match."
 
-	error_csv = open("./logreg.csv", 'w')
+	error_csv = open(name+"_logreg.csv", 'w')
 	_w = numpy.zeros((observations[0].shape[0]+1,1))
 
 	#

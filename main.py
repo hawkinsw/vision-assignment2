@@ -99,7 +99,7 @@ def build_linear_classifier_evaluator():
 	print("# of classifications: " + str(classifications.size))
 	print("# of observations: " + str(len(observations)))
 
-	l = logreg.LogReg(logreg.FitLogReg(observations, classifications, 0.01))
+	l = logreg.LogReg(logreg.FitLogReg(observations, classifications, 0.001, convergence=0.00001))
 
 	return Evaluator(LinearEvaluator(l))
 
@@ -109,7 +109,7 @@ def build_gaussian_evaluator():
 	#
 	face_patches = dataprep.read_mosaic("./actual/face-mosaic.gif")
 	reshaped_face = [numpy.reshape(p, image_column_shape) for p in face_patches]
-	face_g = gaussian.FitGaussian(image_column_shape, reshaped_face)
+	face_g = gaussian.FitGaussian(image_column_shape, reshaped_face, name="face")
 	face_g.save_mu("./actual/face-average.gif")
 
 	#
@@ -117,7 +117,7 @@ def build_gaussian_evaluator():
 	#
 	random_patches = dataprep.read_mosaic("./actual/random-mosaic.gif")
 	reshaped_random=[numpy.reshape(p, image_column_shape) for p in random_patches]
-	random_g = gaussian.FitGaussian(image_column_shape, reshaped_random)
+	random_g = gaussian.FitGaussian(image_column_shape, reshaped_random, name="random")
 	random_g.save_mu("./actual/random-average.gif")
 
 	return Evaluator(GaussianEvaluator(face_g, random_g))
