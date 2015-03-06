@@ -1,0 +1,306 @@
+<html>
+<head>
+<title>CS6501 Assignment 2 Writeup: Will Hawkins, whh8b</title>
+</head>
+<body>
+<h2>Generating the Data Set</h2>
+<p>
+I wrote a flexible parser/decoder for the MIT-CMU face dataset (dataprep/
+dataprep.py). It handles
+the images themselves and parses the associated ground-truth data. Thanks to
+this decoder, I was able to create and recreate the training data sets quickly
+and easily explore different variables.<br>
+Besides making the facial mosaics,
+the system can compute the "random" mosaics. It selects random patches
+from random images and makes sure that they do not overlap with any faces.<br>
+One interesting parameter that I varied while constructing the data set was
+an "expansion" factor. This factor determined how much beyond the 
+top/bottom/left/right of the marked face to include. I settled on a 20% increase
+beyond the initial markings which made the detectors perform the best.<br>
+Average face:<br>
+<img src=actual/face-average.gif height=120 width=120>(enlarged by 10x)<br>
+Average random:<br>
+<img src=actual/random-average.gif height=120 width=120>(enlarged by 10x)<br>
+<img src=actual/mosaic-full.gif><br>
+This system also made it possible for me to create other mosaics that I used
+to evaluate the detectors. See below for results.
+</p>
+<h2>Constructing the Gaussian</h2>
+<p>
+I used the training data and the pseudo-invserse calculations to generate
+parameters for a Gaussian distribution for the set of face and the set of
+random patches. <br>
+Calculating the pseudo inverse of the covariance matrix involves singular
+value decomposition. The matrixes of the SVD of Sigma can be truncated
+based on the singular values of the diagonal matrix. <br>
+<img src=face-tau-graph.png><br>
+<img src=random-tau-graph.png><br>
+These graphs make the "knee" point obvious.
+Based on these graphs, I selected tau = 1x10-8 as a truncation point. This
+reduced the size of the matrixes in the SVD to approximately 100 (from 144).<br>
+Code for the Gaussian detector is in gaussian.py.
+</p>
+<h2>Construction the Linear Classifier</h2>
+<p>
+Constructing the linear classifier was tricky, but fun! I had a difficult time
+building the learning mechanism -- I initially did not let it iterate 
+long enough. Once I got the learning to converge, the classifier produced
+excellent results! I used a learning rate of 0.001, a convergence factor of
+0.00001 and a maximum of 300 iterations to learn.<br>
+<img src=learning-graph.png><br>
+The value converges very quickly but them takes a number of iterations to
+reach my very small convergence value. The classifier was far more sensitive
+to the learning rate than the convergence factor. A higher learning rate
+meant that the differences at each iteration would flip/flop +/- as they
+neared convergence.<br>
+Code for the Linear Classifier is in logreg.py.
+</p>
+<h2>Results</h2>
+<h3>Self Tests</h3>
+I first tested the Gaussian and Linear Classifier detectors on the 
+training data.
+<table>
+<tr><td>Detector</td><td>Input</td><td># of faces detected</td><td># of non faces detected</td></tr>
+<!-- face_count: 92, non_face_count: 8<br> -->
+<td>Linear</td><td>Faces</td><td>92</td><td>8</td><tr>
+ <!-- linear on Random:<br>
+face_count: 2, non_face_count: 98<br> -->
+<td>Linear</td><td>Random</td><td>2</td><td>98</td><tr>
+ <!-- gaussian on Faces:<br>
+face_count: 100, non_face_count: 0<br> -->
+<td>Gaussian</td><td>Faces</td><td>100</td><td>0</td><tr>
+ <!-- gaussian on Random:<br>
+face_count: 0, non_face_count: 100<br> -->
+<td>Gaussian</td><td>Random</td><td>0</td><td>100</td><tr>
+</table>
+<h3>External Testing</h3>
+<p>
+For more in-depth testing, I constructed a series of testing images. Each test
+input is described along with the results.<br>
+To find faces outside the MIT-CMU dataset, I used the
+<a href=https://www.bioid.com/About/BioID-Face-Database>BioID face database</a>.
+In particular, I used the faces from 1501, 1447 and 1379. <br>
+The random backgrounds were constructed in 4 steps:<br>
+<ol>
+<li>Started with a fractal.
+<li>Applied a wave transformation
+<li>Blurred it.
+<li>Added a perlin noise layer.
+</ol>
+For the test images with solid backgrounds, I choose the red image 
+because a flat black background made the detectors go wild. I think that
+there was too much change between the faces and the black background 
+which caused many false positives.<br>
+<table>
+<tr><td>&nbsp;</td><td>Description</td><td>Original</td><td colspan=2>Gaussian</td><td colspan=2>Linear</td></tr>
+<tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td><b>No</b> Non Max Suppression</td><td>Non Max Suppression</td><td><b>No</b> Non Max Suppression</td><td>Non Max Suppression</td></tr>
+<!-- Mosaics -->
+<tr>
+<td>face_mosaic</td>
+<td>This is 100 face patches selected from "high resolution" images in the MIT CMU data set. It is a coincidence if patches appear in this mosaic <i>and</i> the training set.</td>
+<td><img src="test_input/face_mosaic.gif"/></td>
+<td><img src="test_output/nnm_found_face_mosaic_gaussian.gif"/></td>
+<td><img src="test_output/found_face_mosaic_gaussian.gif"/></td>
+<td><img src="test_output/nnm_found_face_mosaic_linear.gif"/></td>
+<td><img src="test_output/found_face_mosaic_linear.gif"/></td>
+</tr>
+<tr>
+<td>face_mosaic_actual</td>
+<td>This is the face training mosaic.</td>
+<td><img src="test_input/face_mosaic_actual.gif"/></td>
+<td><img src="test_output/nnm_found_face_mosaic_actual_gaussian.gif"/></td>
+<td><img src="test_output/found_face_mosaic_actual_gaussian.gif"/></td>
+<td><img src="test_output/nnm_found_face_mosaic_actual_linear.gif"/></td>
+<td><img src="test_output/found_face_mosaic_actual_linear.gif"/></td>
+</tr>
+<tr>
+<td>random_mosaic</td>
+<td>This is random non-face patches selected from "high resolution" images in the MIT CMU data set.</td>
+<td><img src="test_input/random_mosaic.gif"/></td>
+<td><img src="test_output/nnm_found_random_mosaic_gaussian.gif"/></td>
+<td><img src="test_output/found_random_mosaic_gaussian.gif"/></td>
+<td><img src="test_output/nnm_found_random_mosaic_linear.gif"/></td>
+<td><img src="test_output/found_random_mosaic_linear.gif"/></td>
+</tr>
+<tr>
+<td>random_mosaic_actual</td>
+<td>This is the random training mosaic.</td>
+<td><img src="test_input/random_mosaic_actual.gif"/></td>
+<td><img src="test_output/nnm_found_random_mosaic_actual_gaussian.gif"/></td>
+<td><img src="test_output/found_random_mosaic_actual_gaussian.gif"/></td>
+<td><img src="test_output/nnm_found_random_mosaic_actual_linear.gif"/></td>
+<td><img src="test_output/found_random_mosaic_actual_linear.gif"/></td>
+</tr>
+<!-- End of mosaics -->
+<tr>
+<td>solidbg</td>
+<td>Three faces from the "high resolution" MIT-CMU dataset on a solid background.</td>
+<td><img src="test_input/solidbg.gif"/></td>
+<td><img src="test_output/nnm_found_solidbg_gaussian.gif"/></td>
+<td><img src="test_output/found_solidbg_gaussian.gif"/></td>
+<td><img src="test_output/nnm_found_solidbg_linear.gif"/></td>
+<td><img src="test_output/found_solidbg_linear.gif"/></td>
+</tr>
+<tr>
+<td>solidbg2</td>
+<td>Three different faces from the "high resolution" MIT-CMU dataset on a solid background.</td>
+<td><img src="test_input/solidbg2.gif"/></td>
+<td><img src="test_output/nnm_found_solidbg2_gaussian.gif"/></td>
+<td><img src="test_output/found_solidbg2_gaussian.gif"/></td>
+<td><img src="test_output/nnm_found_solidbg2_linear.gif"/></td>
+<td><img src="test_output/found_solidbg2_linear.gif"/></td>
+</tr>
+<tr>
+<tr>
+<td>solidbg6</td>
+<td>Six faces (the two sets of three from the previous image) on a solid background.</td>
+<td><img src="test_input/solidbg6.gif"/></td>
+<td><img src="test_output/nnm_found_solidbg6_gaussian.gif"/></td>
+<td><img src="test_output/found_solidbg6_gaussian.gif"/></td>
+<td><img src="test_output/nnm_found_solidbg6_linear.gif"/></td>
+<td><img src="test_output/found_solidbg6_linear.gif"/></td>
+</tr>
+<tr>
+<td>solidbg-bioid</td>
+<td>Three faces from the BioID database on a solid background.</td>
+<td><img src="test_input/solidbg-bioid.gif"/></td>
+<td><img src="test_output/nnm_found_solidbg-bioid_gaussian.gif"/></td>
+<td><img src="test_output/found_solidbg-bioid_gaussian.gif"/></td>
+<td><img src="test_output/nnm_found_solidbg-bioid_linear.gif"/></td>
+<td><img src="test_output/found_solidbg-bioid_linear.gif"/></td>
+</tr>
+<tr>
+<td>randombg</td>
+<td>The three faces from solidbg on a random background.</td>
+<td><img src="test_input/randombg.gif"/></td>
+<td><img src="test_output/nnm_found_randombg_gaussian.gif"/></td>
+<td><img src="test_output/found_randombg_gaussian.gif"/></td>
+<td><img src="test_output/nnm_found_randombg_linear.gif"/></td>
+<td><img src="test_output/found_randombg_linear.gif"/></td>
+</tr>
+<tr>
+<td>randombg2</td>
+<td>The three faces from solidbg2 on a random background.</td>
+<td><img src="test_input/randombg2.gif"/></td>
+<td><img src="test_output/nnm_found_randombg2_gaussian.gif"/></td>
+<td><img src="test_output/found_randombg2_gaussian.gif"/></td>
+<td><img src="test_output/nnm_found_randombg2_linear.gif"/></td>
+<td><img src="test_output/found_randombg2_linear.gif"/></td>
+</tr>
+<tr>
+<td>randombg6</td>
+<td>The six faces from solidbg6 on a random background.</td>
+<td><img src="test_input/randombg6.gif"/></td>
+<td><img src="test_output/nnm_found_randombg6_gaussian.gif"/></td>
+<td><img src="test_output/found_randombg6_gaussian.gif"/></td>
+<td><img src="test_output/nnm_found_randombg6_linear.gif"/></td>
+<td><img src="test_output/found_randombg6_linear.gif"/></td>
+</tr>
+<tr>
+<td>randombg-bioid</td>
+<td>Thre three faces from solidbg-biod on a random background.</td>
+<td><img src="test_input/randombg-bioid.gif"/></td>
+<td><img src="test_output/nnm_found_randombg-bioid_gaussian.gif"/></td>
+<td><img src="test_output/found_randombg-bioid_gaussian.gif"/></td>
+<td><img src="test_output/nnm_found_randombg-bioid_linear.gif"/></td>
+<td><img src="test_output/found_randombg-bioid_linear.gif"/></td>
+</tr>
+</table>
+<h3>Discussion</h3>
+Based on my experimentation with the Gaussian and Linear Classifier detectors,
+it seems that the Gaussian detector works reasonably well on images that are
+very similar to those in the training set. <br>
+Both detectors find almost all of the faces in the mosaics of face patches.
+However, the Gaussian detector is far more likely to mark random patches 
+as faces than the Linear Classifier detector. Overall, the Guassian 
+detector is far more likely to produce false positives than the 
+Linear Classifier detector.<br>
+The non-mosaic test inputs reinforce the conclusion that the Gaussian detector
+works well on inputs that are similar to the training set. For example, the Gaussian detector
+works well on solidbg, solidbg2, solidbg2, randombg, randombg2, and randombg6.
+It does not, however, work well for the test inputs that contain images
+from outside the training set (solidbg-biod, randombg-biod, etc). The test
+input images that contain faces from outside the training set show the power
+of the Linear Classifier detector. This discrepancy is even more obvious
+in the "pyramid" detector. 
+<h2>Detecting Faces of Different Resolutions.</h2>
+A "pyramid" detector makes it possible to detect variable-sized faces 
+with detectors that are trained to detect fixed-sized faces.
+The idea is that the input image is repeatedly scaled down and handed to the
+fixed-size face detector. Given enough iterations, faces of all different 
+resolutions will eventually be 12x12 and, therefore, recognizable to our 
+detector.<br>
+The original input image is blurred before it is downscaled. This will prevent
+aliasing. A Gaussian blur is applied with a sigma value that is proporational
+to the scaling factor. Accoring to the <a href=http://scikit-image.org/docs/dev/api/skimage.transform.html#skimage.transform.pyramid_gaussian>skimage website</a> and <a href=http://en.wikipedia.org/wiki/68%E2%80%9395%E2%80%9399.7_rule>math</a>, a feasible
+sigma is 2*scale/6.0. Note that even though I am referring to the 
+documentation of the image pyramid generating function from skimage, I <i>did not</i> use that in my implementation. I found that a scale of 1.1 and 
+maximum of 25 layers made the pyramid detector work reasonably well. In other
+words, the image was downscaled by a factor of 1.1 25 times (or the image 
+could not be downscaled any further, whichever came first).<br>
+My pyramid detector includes non maximal suppression in two places: at each 
+scale and then globally. This technique meant that only the "best" faces
+at each scale are detected and only the best faces across scales are included
+in the final results. <br>
+Code for the pyramid detector is in main.py in the pyramid_find_faces function.
+<table>
+<tr><td>&nbsp;</td><td>Description</td><td>Original</td><td colspan=2>Gaussian</td><td colspan=2>Linear</td></tr>
+<tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td><b>No</b> Non Max Suppression</td><td>Non Max Suppression</td><td><b>No</b> Non Max Suppression</td><td>Non Max Suppression</td></tr>
+<tr>
+<td>solidbg-different-sizes</td>
+<td>Two 12x12 faces and one 24x24 face. All three faces are from the MIT-CMU data set.</td>
+<td><img src="test_input/solidbg-different-sizes.gif"/></td>
+<td><img src="test_output/nnm_found_solidbg-different-sizes_pyramid_gaussian.gif"/></td>
+<td><img src="test_output/found_solidbg-different-sizes_pyramid_gaussian.gif"/></td>
+<td><img src="test_output/nnm_found_solidbg-different-sizes_pyramid_linear.gif"/></td>
+<td><img src="test_output/found_solidbg-different-sizes_pyramid_linear.gif"/></td>
+</tr>
+<tr>
+<td>randombg-different-sizes</td>
+<td>Same faces as solidbg-different-sizes but on a random background.</td>
+<td><img src="test_input/randombg-different-sizes.gif"/></td>
+<td><img src="test_output/nnm_found_randombg-different-sizes_pyramid_gaussian.gif"/></td>
+<td><img src="test_output/found_randombg-different-sizes_pyramid_gaussian.gif"/></td>
+<td><img src="test_output/nnm_found_randombg-different-sizes_pyramid_linear.gif"/></td>
+<td><img src="test_output/found_randombg-different-sizes_pyramid_linear.gif"/></td>
+</tr>
+
+<tr>
+<td>solidbg-different-sizes2</td>
+<td>The same three faces as the first two images plus a bigger version of the 24x24 image and a big face from the BioId dataset. </td>
+<td><img src="test_input/solidbg-different-sizes2.gif"/></td>
+<td><img src="test_output/nnm_found_solidbg-different-sizes2_pyramid_gaussian.gif"/></td>
+<td><img src="test_output/found_solidbg-different-sizes2_pyramid_gaussian.gif"/></td>
+<td><img src="test_output/nnm_found_solidbg-different-sizes2_pyramid_linear.gif"/></td>
+<td><img src="test_output/found_solidbg-different-sizes2_pyramid_linear.gif"/></td>
+</tr>
+<tr>
+<td>solidbg-different-many-sizes</td>
+<td>Various faces of different sizes all from the MIT-CMU dataset.</td>
+<td><img src="test_input/solidbg-different-many-sizes.gif"/></td>
+<td><img src="test_output/nnm_found_solidbg-different-many-sizes_pyramid_gaussian.gif"/></td>
+<td><img src="test_output/found_solidbg-different-many-sizes_pyramid_gaussian.gif"/></td>
+<td><img src="test_output/nnm_found_solidbg-different-many-sizes_pyramid_linear.gif"/></td>
+<td><img src="test_output/found_solidbg-different-many-sizes_pyramid_linear.gif"/></td>
+</tr>
+<tr>
+<td>solidbg-different-many-sizes-bioid</td>
+<td>Various faces of different sizes all from the BioId dataset.</td>
+<td><img src="test_input/solidbg-different-many-sizes-bioid.gif"/></td>
+<td><img src="test_output/nnm_found_solidbg-different-many-sizes-bioid_pyramid_gaussian.gif"/></td>
+<td><img src="test_output/found_solidbg-different-many-sizes-bioid_pyramid_gaussian.gif"/></td>
+<td><img src="test_output/nnm_found_solidbg-different-many-sizes-bioid_pyramid_linear.gif"/></td>
+<td><img src="test_output/found_solidbg-different-many-sizes-bioid_pyramid_linear.gif"/></td>
+</tr>
+</table>
+<h3>Discussion</h3>
+As I said earlier, the Guassian detector works best detecting faces that
+are very similar to its training data. As a result, it performs poorly in 
+most of these tests. However, as bas as the Gaussian detector is, the Linear
+Classifier detector works surprisingly well. <br>
+In general, the more the image is scaled the more false positives there are. 
+Each blur/scale increases how much the face bleeds into the background which
+produces false positives (especially with the sensitive Gaussian detector). 
+<!-- End of Pyramids -->
+</body>
+</html>
