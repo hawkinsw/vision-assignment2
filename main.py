@@ -344,10 +344,6 @@ def pyramid_find_faces(input_image_filename,
 	test_image = original_test_image
 
 	o = 0
-	#for pyr in skimage.transform.pyramid_gaussian(test_image, 10, 1.1):
-		#skimage.io.imsave("./output/pyr-test_image-" + str(o) + ".jpg", pyr)
-		#test_image = pyr
-		#o += 1
 	for o in range(octaves):
 		print("Starting octave %d." % o)
 		print("Test image shape: %s." % str(test_image.shape))
@@ -358,18 +354,41 @@ def pyramid_find_faces(input_image_filename,
 		if test_image.shape[0] == 1 or test_image.shape[1] == 1:
 			break
 
-		skimage.io.imsave("./output/test_image-" + str(o) + ".jpg", test_image)
+		skimage.io.imsave("./output/test_image-" + str(o) + ".gif", test_image)
 
 		# find faces
 		found_faces = list_faces(test_image, evaluator)
+		found_test_image = numpy.zeros(test_image.shape)
+		for (y,x), value in found_faces:
+			found_test_image[y,x] = value#*(math.pow(scale,o))
 
-		# convert found face locations back to original
-		for (yp,xp), value in found_faces:
-			y = yp*((scale)**o)
-			x = xp*((scale)**o)
-			print("Found face at (yp,xp):(%d,%d) -> (y,x):(%d,%d)" %(yp,xp,y,x))
-			if output_image[y,x] == 0 or value > output_image[y,x][0]:
-				output_image[y,x] = (value, (12*(scale**o),12*(scale**o)))
+		#
+		# Non max suppression per level!
+		for x in range(found_test_image.shape[1]):
+			for y in range(found_test_image.shape[0]):
+				if found_test_image[y,x] == 0:
+					continue
+				is_max = True
+				value = found_test_image[y,x]
+				if neighborhood != None:
+					for xx in range(-1*(neighborhood[1]/2), neighborhood[1]/2):
+						for yy in range(-1*(neighborhood[0]/2), neighborhood[0]/2):
+							if y+yy > 0 and y+yy < found_test_image.shape[0] and\
+							   x+xx > 0 and x+xx < found_test_image.shape[1] and\
+								 found_test_image[y+yy,x+xx] > value:
+									is_max = False
+									break
+						if not is_max:
+							break
+				if not is_max:
+					continue
+				# convert found face locations back to original
+				original_y = y*(math.pow(scale,o))
+				original_x = x*(math.pow(scale,o))
+				print("Found face at (y,x):(%d,%d) -> (original_y,original_x):(%d,%d)"%
+					(y,x,original_y,original_x))
+				output_image[original_y,original_x] = (value,
+					(12*(math.pow(scale,o)),12*(math.pow(scale,o))))
 		else:
 			if len(found_faces) == 0:
 				print("Found no faces at %d." % o)
@@ -382,7 +401,6 @@ def pyramid_find_faces(input_image_filename,
 			mode='wrap')
 		# 2. subsample
 		test_image = skimage.transform.rescale(test_image, 1.0/scale)
-			#(test_image.shape[0]*scale, test_image.shape[1]*scale))
 
 	# 
 	# Draw boxes around found faces.
@@ -391,24 +409,27 @@ def pyramid_find_faces(input_image_filename,
 		for y in range(output_image.shape[0]):
 			if output_image[y,x] == 0:
 				continue
+			found_face_width = output_image[y,x][1][1]
+			found_face_height = output_image[y,x][1][0]
 			#
-			# non-maximum suppression.
+			# Do a "global" non-maximal suppression with 
+			# a neighborhood that is proportional to the
+			# size of the detected face.
 			#
 			is_max = True
 			if neighborhood != None:
-				for xx in range(-1*(neighborhood[1]/2), neighborhood[1]/2):
-					for yy in range(-1*(neighborhood[0]/2), neighborhood[0]/2):
+				for xx in range(int(-1*(found_face_width/2)), int(found_face_width/2)):
+					for yy in range(int(-1*(found_face_height/2)), int(found_face_height/2)):
 						if y+yy > 0 and y+yy < output_image.shape[0] and\
 						   x+xx > 0 and x+xx < output_image.shape[1] and\
 							 output_image[y+yy,x+xx] != 0 and\
 							 output_image[y+yy,x+xx][0] > output_image[y,x][0]:
 								is_max = False
 								break
+					if not is_max:
+						break
 			if not is_max:
 				continue
-			found_face_width = output_image[y,x][1][1]
-			found_face_height = output_image[y,x][1][0]
-
 			right =math.floor(min(x+found_face_width, original_test_image.shape[1]-1))
 			bottom=math.floor(min(y+found_face_height,original_test_image.shape[0]-1))
 			right = int(right)
