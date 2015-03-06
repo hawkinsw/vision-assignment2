@@ -154,80 +154,104 @@ def test_basic_find_faces():
 		#
 		# w/o non maximal suppression.
 		#
-		basic_find_faces("./test_input/solidbg.jpg",
-			"./test_output/nnm_found_solidbg_" + tag + ".jpg",
+		basic_find_faces("./test_input/solidbg.gif",
+			"./test_output/nnm_found_solidbg_" + tag + ".gif",
 			evaluator, neighborhood=None)
-		basic_find_faces("./test_input/solidbg2.jpg",
-			"./test_output/nnm_found_solidbg2_" + tag + ".jpg",
+		basic_find_faces("./test_input/solidbg2.gif",
+			"./test_output/nnm_found_solidbg2_" + tag + ".gif",
 			evaluator, neighborhood=None)
-		basic_find_faces("./test_input/randombg.jpg",
-			"./test_output/nnm_found_randombg_" + tag + ".jpg",
+		basic_find_faces("./test_input/randombg.gif",
+			"./test_output/nnm_found_randombg_" + tag + ".gif",
 			evaluator, neighborhood=None)
-		basic_find_faces("./test_input/randombg2.jpg",
-			"./test_output/nnm_found_randombg2_" + tag + ".jpg",
+		basic_find_faces("./test_input/randombg2.gif",
+			"./test_output/nnm_found_randombg2_" + tag + ".gif",
 			evaluator, neighborhood=None)
-		basic_find_faces("./test_input/solidbg-bioid.jpg",
-			"./test_output/nnm_found_solidbg-bioid_" + tag + ".jpg",
+		basic_find_faces("./test_input/randombg6.gif",
+			"./test_output/nnm_found_randombg6_" + tag + ".gif",
 			evaluator, neighborhood=None)
-		basic_find_faces("./test_input/randombg-bioid.jpg",
-			"./test_output/nnm_found_randombg-bioid_" + tag + ".jpg",
+		basic_find_faces("./test_input/solidbg6.gif",
+			"./test_output/nnm_found_solidbg6_" + tag + ".gif",
+			evaluator, neighborhood=None)
+		basic_find_faces("./test_input/solidbg-bioid.gif",
+			"./test_output/nnm_found_solidbg-bioid_" + tag + ".gif",
+			evaluator, neighborhood=None)
+		basic_find_faces("./test_input/randombg-bioid.gif",
+			"./test_output/nnm_found_randombg-bioid_" + tag + ".gif",
 			evaluator, neighborhood=None)
 		#
 		# w/ non-maximal suppression
 		#
-		basic_find_faces("./test_input/solidbg.jpg",
-			"./test_output/found_solidbg_" + tag + ".jpg",
+		basic_find_faces("./test_input/solidbg.gif",
+			"./test_output/found_solidbg_" + tag + ".gif",
 			evaluator)
-		basic_find_faces("./test_input/solidbg2.jpg",
-			"./test_output/found_solidbg2_" + tag + ".jpg",
+		basic_find_faces("./test_input/solidbg2.gif",
+			"./test_output/found_solidbg2_" + tag + ".gif",
 			evaluator)
-		basic_find_faces("./test_input/randombg.jpg",
-			"./test_output/found_randombg_" + tag + ".jpg",
+		basic_find_faces("./test_input/randombg.gif",
+			"./test_output/found_randombg_" + tag + ".gif",
 			evaluator)
-		basic_find_faces("./test_input/randombg2.jpg",
-			"./test_output/found_randombg2_" + tag + ".jpg",
+		basic_find_faces("./test_input/randombg2.gif",
+			"./test_output/found_randombg2_" + tag + ".gif",
 			evaluator)
-		basic_find_faces("./test_input/solidbg-bioid.jpg",
-			"./test_output/found_solidbg-bioid_" + tag + ".jpg",
+		basic_find_faces("./test_input/randombg6.gif",
+			"./test_output/found_randombg6_" + tag + ".gif",
 			evaluator)
-		basic_find_faces("./test_input/randombg-bioid.jpg",
-			"./test_output/found_randombg-bioid_" + tag + ".jpg",
+		basic_find_faces("./test_input/solidbg6.gif",
+			"./test_output/found_solidbg6_" + tag + ".gif",
 			evaluator)
-
+		basic_find_faces("./test_input/solidbg-bioid.gif",
+			"./test_output/found_solidbg-bioid_" + tag + ".gif",
+			evaluator)
+		basic_find_faces("./test_input/randombg-bioid.gif",
+			"./test_output/found_randombg-bioid_" + tag + ".gif",
+			evaluator)
 def test_pyramid_find_faces():
 	linear_evaluator = build_linear_classifier_evaluator()
 	gaussian_evaluator = build_gaussian_evaluator()
 
-	#evaluator_tags = [(linear_evaluator, "linear"),
-		#(gaussian_evaluator, "gaussian")]
-	evaluator_tags = [(linear_evaluator, "linear")]
+	evaluator_tags = [(linear_evaluator, "linear"),
+		(gaussian_evaluator, "gaussian")]
 	for evaluator, tag in evaluator_tags:
 		#
 		# w/o non maximal suppression.
 		#
-		pyramid_find_faces("./test_input/solidbg-different-sizes.jpg",
-			"./test_output/nnm_found_solidbg-different-sizes_pyramid_ "+tag+".jpg",
+		"""
+		pyramid_find_faces("./test_input/solidbg-different-sizes.gif",
+			"./test_output/nnm_found_solidbg-different-sizes_pyramid_"+tag+".gif",
 			evaluator, neighborhood=None)
-		pyramid_find_faces("./test_input/solidbg-different-many-sizes.jpg",
-			"./test_output/nnm_found_solidbg-different-many-sizes_pyramid_ "+tag+".jpg",
+		pyramid_find_faces("./test_input/solidbg-different-many-sizes.gif",
+			"./test_output/nnm_found_solidbg-different-many-sizes_pyramid_"+tag+".gif",
 			evaluator, neighborhood=None)
-		pyramid_find_faces("./test_input/solidbg-different-many-sizes-bioid.jpg",
-			"./test_output/nnm_found_solidbg-different-many-sizes-bioid_pyramid_ "+tag+".jpg",
+		"""
+		pyramid_find_faces("./test_input/randombg-different-sizes.gif",
+			"./test_output/nnm_found_randombg-different-sizes_pyramid_"+tag+".gif",
 			evaluator, neighborhood=None)
-
+		"""
+		pyramid_find_faces("./test_input/solidbg-different-many-sizes-bioid.gif",
+			"./test_output/nnm_found_solidbg-different-many-sizes-bioid_pyramid_"+tag+".gif",
+			evaluator, neighborhood=None)
+		pyramid_find_faces("./test_input/solidbg-different-sizes2.gif",
+			"./test_output/nnm_found_solidbg-different-sizes2_pyramid_"+tag+".gif",
+			evaluator, neighborhood=None)
 		#
 		# w/ non-maximal suppression
 		#
-		pyramid_find_faces("./test_input/solidbg-different-sizes.jpg",
-			"./test_output/found_solidbg-different-sizes_pyramid_ "+tag+".jpg",
+		pyramid_find_faces("./test_input/solidbg-different-sizes.gif",
+			"./test_output/found_solidbg-different-sizes_pyramid_"+tag+".gif",
 			evaluator)
-		pyramid_find_faces("./test_input/solidbg-different-many-sizes.jpg",
-			"./test_output/found_solidbg-different-many-sizes_pyramid_ "+tag+".jpg",
+		pyramid_find_faces("./test_input/randombg-different-sizes.gif",
+			"./test_output/found_randombg-different-sizes_pyramid_"+tag+".gif",
 			evaluator)
-		pyramid_find_faces("./test_input/solidbg-different-many-sizes-bioid.jpg",
-			"./test_output/found_solidbg-different-many-sizes-bioid_pyramid_ "+tag+".jpg",
+		pyramid_find_faces("./test_input/solidbg-different-many-sizes.gif",
+			"./test_output/found_solidbg-different-many-sizes_pyramid_"+tag+".gif",
 			evaluator)
-
+		pyramid_find_faces("./test_input/solidbg-different-many-sizes-bioid.gif",
+			"./test_output/found_solidbg-different-many-sizes-bioid_pyramid_"+tag+".gif",
+			evaluator)
+		pyramid_find_faces("./test_input/solidbg-different-sizes2.gif",
+			"./test_output/found_solidbg-different-sizes2_pyramid_"+tag+".gif",
+			evaluator)
+		"""
 def basic_find_faces(input_image_filename,
 	output_image_filename,
 	evaluator,
