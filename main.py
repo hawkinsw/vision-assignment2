@@ -144,6 +144,39 @@ def self_eating_test():
 			print("%s on %s:" % (evaluator_tag, test_set_tag))
 			print("face_count: %d, non_face_count: %d" % (face_count, non_face_count))
 
+def test_basic_find_faces_mosaic():
+	linear_evaluator = build_linear_classifier_evaluator()
+	gaussian_evaluator = build_gaussian_evaluator()
+
+	evaluator_tags = [(linear_evaluator, "linear"),
+		(gaussian_evaluator, "gaussian")]
+	for evaluator, tag in evaluator_tags:
+		basic_find_faces("./test_input/face_mosaic_actual.gif",
+			"./test_output/nnm_found_face_mosaic_actual_" + tag + ".gif",
+			evaluator, neighborhood=None)
+		basic_find_faces("./test_input/random_mosaic_actual.gif",
+			"./test_output/nnm_found_random_mosaic_actual_" + tag + ".gif",
+			evaluator, neighborhood=None)
+		basic_find_faces("./test_input/face_mosaic_actual.gif",
+			"./test_output/found_face_mosaic_actual_" + tag + ".gif",
+			evaluator)
+		basic_find_faces("./test_input/random_mosaic_actual.gif",
+			"./test_output/found_random_mosaic_actual_" + tag + ".gif",
+			evaluator)
+
+		basic_find_faces("./test_input/face_mosaic.gif",
+			"./test_output/nnm_found_face_mosaic_" + tag + ".gif",
+			evaluator, neighborhood=None)
+		basic_find_faces("./test_input/random_mosaic.gif",
+			"./test_output/nnm_found_random_mosaic_" + tag + ".gif",
+			evaluator, neighborhood=None)
+		basic_find_faces("./test_input/face_mosaic.gif",
+			"./test_output/found_face_mosaic_" + tag + ".gif",
+			evaluator)
+		basic_find_faces("./test_input/random_mosaic.gif",
+			"./test_output/found_random_mosaic_" + tag + ".gif",
+			evaluator)
+
 def test_basic_find_faces():
 	linear_evaluator = build_linear_classifier_evaluator()
 	gaussian_evaluator = build_gaussian_evaluator()
