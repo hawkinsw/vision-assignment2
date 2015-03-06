@@ -39,13 +39,22 @@ class LinearEvaluator:
 
 def __initialize_data__():
 	d = dataprep.GroundTruth("./dataprep/data/",\
-		filename="./dataprep/data-hires.html",\
+		filename="./dataprep/data-random.html",\
 		expansion=0.20)
 	d.draw_face_squares("./output/")
 	patches = d.extract_face_patches(count=100)
 	dataprep.generate_mosaic(patches, "./actual/face-mosaic.gif", mosaic_width=10)
 	patches = d.extract_random_patches((12,12), count=100)
 	dataprep.generate_mosaic(patches, "./actual/random-mosaic.gif", mosaic_width=10)
+	d = dataprep.GroundTruth("./dataprep/data/",\
+		filename="./dataprep/data-hires.html",\
+		expansion=0.20)
+	d.draw_face_squares("./output/")
+	patches = d.extract_face_patches(count=100)
+	dataprep.generate_mosaic(patches, "./test_input/face_mosaic.gif", mosaic_width=10)
+	patches = d.extract_random_patches((12,12), count=100)
+	dataprep.generate_mosaic(patches, "./test_input/random_mosaic.gif", mosaic_width=10)
+
 
 def list_faces(input_image,
 	evaluator):
